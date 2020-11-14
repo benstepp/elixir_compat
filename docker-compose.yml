@@ -17,3 +17,5 @@ services:
     tty: true
     volumes:
       - ./elixir:/elixir
+      - /app/deps
+      - /app/_build

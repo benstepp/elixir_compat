@@ -1,8 +1,6 @@
-require_relative 'lib/elixir_compat/version'
-
 Gem::Specification.new do |spec|
   spec.name          = "elixir_compat"
-  spec.version       = ElixirCompat::VERSION
+  spec.version       = "0.0.1"
   spec.authors       = ["Benjamin Stepp"]
   spec.email         = ["me@benstepp.com"]
 
