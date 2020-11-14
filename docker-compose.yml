@@ -9,3 +9,11 @@ services:
     tty: true
     volumes:
       - ./ruby:/ruby
+  elixir:
+    build:
+      context: './elixir'
+      dockerfile: Dockerfile
+    command: bash
+    tty: true
+    volumes:
+      - ./elixir:/elixir
