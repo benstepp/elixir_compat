@@ -41,6 +41,8 @@ module ElixirCompat
 
         def digest(digest_long_name)
           case digest_long_name
+          when :sha
+            OpenSSL::Digest::SHA1.new()
           when :sha1
             OpenSSL::Digest::SHA1.new()
           when :sha224

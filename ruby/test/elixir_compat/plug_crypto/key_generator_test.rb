@@ -109,6 +109,12 @@ class ElixirCompat::PlugCrypto::KeyGeneratorTest < Minitest::Test
     assert to_hex(key) == "6e88be8bad7eae9d9e10aa061224034fed48d03fcbad968b56006784539d5214"
   end
 
+  def test_recognizes_sha_as_sha1_like_erlang
+    key = generate("password", "salt", digest: :sha)
+    assert key.bytesize == 32
+    assert to_hex(key) == "6e88be8bad7eae9d9e10aa061224034fed48d03fcbad968b56006784539d5214"
+  end
+
   def test_can_generate_with_length_option
     key = generate("password", "salt", length: 64, digest: :sha1)
     assert key.bytesize == 64
