@@ -75,7 +75,70 @@ class ElixirCompat::PlugCrypto::MessageVerifierTest < Minitest::Test
     end
   end
 
-  def test_verify_errors_when_payload_tampered
+  def test_verify_errors_when_payload_tampered_using_sha256
+    signed = MV.sign("hello world", "secret")
+    parts = signed.split(".")
+    parts[1] = Base64.urlsafe_encode64("hello mars", padding: false)
+    tampered = parts.join(".")
+
+    assert_raises MV::InvalidSignature do
+      MV.verify(tampered, "secret")
+    end
+  end
+
+  def test_verify_errors_when_payload_tampered_using_sha384
+    signed = MV.sign("hello world", "secret", :sha384)
+    parts = signed.split(".")
+    parts[1] = Base64.urlsafe_encode64("hello mars", padding: false)
+    tampered = parts.join(".")
+
+    assert_raises MV::InvalidSignature do
+      MV.verify(tampered, "secret")
+    end
+  end
+
+  def test_verify_errors_when_payload_tampered_using_sha512
+    signed = MV.sign("hello world", "secret", :sha512)
+    parts = signed.split(".")
+    parts[1] = Base64.urlsafe_encode64("hello mars", padding: false)
+    tampered = parts.join(".")
+
+    assert_raises MV::InvalidSignature do
+      MV.verify(tampered, "secret")
+    end
+  end
+
+  def test_verify_errors_when_protected_tampered_using_sha256
+    signed = MV.sign("hello world", "secret")
+    parts = signed.split(".")
+    parts[0] = Base64.urlsafe_encode64("HS384", padding: false)
+    tampered = parts.join(".")
+
+    assert_raises MV::InvalidSignature do
+      MV.verify(tampered, "secret")
+    end
+  end
+
+  def test_verify_errors_when_protected_tampered_using_sha384
+    signed = MV.sign("hello world", "secret", :sha384)
+    parts = signed.split(".")
+    parts[0] = Base64.urlsafe_encode64("HS512", padding: false)
+    tampered = parts.join(".")
+
+    assert_raises MV::InvalidSignature do
+      MV.verify(tampered, "secret")
+    end
+  end
+
+  def test_verify_errors_when_protected_tampered_using_sha512
+    signed = MV.sign("hello world", "secret", :sha512)
+    parts = signed.split(".")
+    parts[0] = Base64.urlsafe_encode64("HS256", padding: false)
+    tampered = parts.join(".")
+
+    assert_raises MV::InvalidSignature do
+      MV.verify(tampered, "secret")
+    end
   end
 
   def parts(string)
