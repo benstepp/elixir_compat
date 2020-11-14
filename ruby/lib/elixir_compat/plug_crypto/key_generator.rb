@@ -49,8 +49,8 @@ module ElixirCompat
             OpenSSL::Digest::SHA224.new()
           when :sha256
             OpenSSL::Digest::SHA256.new()
-          when :sha348
-            OpenSSL::Digest::SHA348.new()
+          when :sha384
+            OpenSSL::Digest::SHA384.new()
           when :sha512
             OpenSSL::Digest::SHA512.new()
           else
