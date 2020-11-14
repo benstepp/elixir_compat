@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  ruby:
+    build:
+      context: './ruby'
+      dockerfile: Dockerfile
+    command: bash
+    tty: true
+    volumes:
+      - ./ruby:/ruby
