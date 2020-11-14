@@ -31,7 +31,7 @@ module ElixirCompat
           return nil unless ["HS256", "HS384", "HS512"].include?(token[:protected])
 
           challenge = openssl_sign(hmac_protected_to_sha2(token[:protected]), secret, token[:plain_text])
-          if challenge == token[:signature]
+          if ElixirCompat::PlugCrypto.secure_compare(challenge, token[:signature])
             token[:payload]
           else
             raise InvalidSignature.new
