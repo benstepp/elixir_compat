@@ -2,16 +2,116 @@ require 'base64'
 
 module ElixirCompat
   module PlugCrypto
-    module MessageVerifier
 
-      class InvalidSignature < StandardError; end
+    ##
+    # MessageVerifier makes it easy to generate and verify messages which are
+    # signed to prevent tampering.
+    #
+    # The data can be read by the client, but cannot be tampered with.
+    #
+    # The message and its verification are base64url encoded and returned to you
+    #
+    # The current algorithm used is HMAC-SHA, with SHA256, SHA384, and SHA512 as
+    # supported digests types.
+
+    class MessageVerifier
 
       class << self
+        ##
+        # Signs a message with a given secret
+        #
+        # ### Parameters
+        #
+        # * `message` (String) - The message to be signed
+        # * `secret` (String) - The secret used when signing
+        # * `digest` (Atom) - The digest type to be used. must be one of:
+        # `:sha256`, `:sha384`, or `:sha512`.
+        #
+        # ### Examples
+        #
+        # ##### Signing a message using the default SHA256 digest type:
+        #
+        # ```elixir
+        # # elixir
+        # Plug.Crypto.MessageVerifier.sign("hello world", "secret")
+        # ```
+        #
+        # ```ruby
+        # # ruby
+        # ElixirCompat::PlugCrypto::MessageVerifier.sign("hello world", "secret")
+        # ```
+        #
+        # ##### Signing a message using another digest type:
+        #
+        # ```elixir
+        # # elixir
+        # Plug.Crypto.MessageVerifier.sign("hello world", "secret", :sha512)
+        # ```
+        #
+        # ```ruby
+        # # ruby
+        # ElixirCompat::PlugCrypto::MessageVerifier.sign("hello world", "secret", :sha512)
+        # ```
+        #
         def sign(message, secret, digest = :sha256)
           check_message(message)
           hmac_sha2_sign(message, secret, digest)
         end
 
+        ##
+        # Decodes and Verfies the encoded binary was not tampered with. This
+        # method will raise a
+        # `ElixirCompat::PlugCrypto::MessageVerifier::InvalidSignature`
+        # whenever the message was not verified.
+        #
+        # ### Parameters
+        #
+        # * `signed` (String) - The signed message to be verified
+        # * `secret` (String) - The secret used to sign the message
+        #
+        # ### Examples
+        #
+        # #### Verifying a signed message
+        #
+        # ```elixir
+        # # elixir
+        #
+        # signed = "SFMyNTY.aGVsbG8gd29ybGQ.k_zLAG_uMdIoLoQlm7legV0eIm0J2LmyIU4MH-J6at4"
+        # {:ok, message} = Plug.Crypto.MessageVerifier.verify(signed, "secret")
+        # assert message == "hello world"
+        # ```
+        #
+        # ```ruby
+        # # ruby
+        #
+        # signed = "SFMyNTY.aGVsbG8gd29ybGQ.k_zLAG_uMdIoLoQlm7legV0eIm0J2LmyIU4MH-J6at4"
+        # message = ElixirCompat::PlugCrypto::MessageVerifier.verify(signed, "secret")
+        # assert message == "hello world"
+        # ```
+        #
+        # #### Error handling comparison
+        #
+        # ```elixir
+        # # elixir
+        #
+        # signed = "SFMyNTY.aGVsbG8gd29ybGQ.k_zLAG_uMdIoLoQlm7legV0eIm0J2LmyIU4MH-J6at4"
+        # case Plug.Crypto.MessageVerifier.verify(signed, "secret") do
+        #   {:ok, message} -> message
+        #   :error -> # invalid
+        # end
+        # ```
+        #
+        # ```ruby
+        # # ruby
+        #
+        # signed = "SFMyNTY.aGVsbG8gd29ybGQ.k_zLAG_uMdIoLoQlm7legV0eIm0J2LmyIU4MH-J6at4"
+        # begin
+        #   ElixirCompat::PlugCrypto::MessageVerifier.verify(signed, "secret")
+        # rescue ElixirCompat::PlugCrypto::MesageVerifier::InvalidSignature
+        #   # invalid
+        # end
+        # ```
+        #
         def verify(signed, secret)
           hmac_sha2_verify(signed, secret)
         end
@@ -108,6 +208,9 @@ module ElixirCompat
         end
 
       end
+
+      class InvalidSignature < StandardError; end # :nodoc:
+
     end
   end
 end
