@@ -2,5 +2,10 @@ The following projects served as the source for this project.
 
 plug_crypto
 * COPYRIGHT: Copyright (c) 2018 Plataformatec
-* LICENSE: http://www.apache.org/licenses/LICENSE-2.0
+* LICENSE: https://github.com/elixir-plug/plug_crypto/blob/master/LICENSE
 * HOMEPAGE: https://github.com/elixir-plug/plug_crypto
+
+phoenix
+* COPYRIGHT: Copyright (c) 2014 Chris McCord
+* LICENSE: https://github.com/phoenixframework/phoenix/blob/master/LICENSE.md
+* HOMEPAGE: https://github.com/phoenixframework/phoenix
