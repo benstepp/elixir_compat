@@ -9,6 +9,7 @@ services:
     tty: true
     volumes:
       - ./ruby:/ruby
+      - ./fixtures:/ruby/fixtures
   elixir:
     build:
       context: './elixir'
@@ -17,5 +18,6 @@ services:
     tty: true
     volumes:
       - ./elixir:/elixir
-      - /app/deps
-      - /app/_build
+      - ./fixtures:/elixir/fixtures
+      - /elixir/deps
+      - /elixir/_build

@@ -19,7 +19,10 @@ defmodule ElixirCompat.MixProject do
 
   defp deps do
     [
-      {:plug_crypto, "~> 1.0"}
+      {:jason, "~> 1.2.2"},
+      {:phoenix, "~> 1.5"},
+      {:plug_crypto, "~> 1.0"},
+      {:uuid, "~> 1.1.8"}
     ]
   end
 end
