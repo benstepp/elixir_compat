@@ -209,4 +209,11 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
     end
   end
 
+  def test_encrypt_and_decrypt_dont_need_signign_secret
+    secret_key_base = secret()
+    token = PC.encrypt(secret_key_base, "salt", "string")
+    result = PC.decrypt(secret_key_base, "salt", token)
+    assert result == "string"
+  end
+
 end

@@ -121,12 +121,13 @@ module ElixirCompat
       ##
       # Encodes, encrypts, and signs data into a token
       #
+      # :args: secret_key_base, salt, signing_salt, data, options = {}
+      #
       # ### Parameters
       # * `secret_key_base` (String) - The secret key base used to generate a key
       # * `salt` (String) - The salt used to generate the key
-      # * `signing_salt` (String) - The salt used to sign the content encryption key
+      # * `signing_salt` (String) [optional] - The salt used to sign the content encryption key
       # * `data` (Any) - The data to be encoded into the token. This uses
-      # Erlang.term_to_binary interally
       #
       # #### Options
       # * `key_iterations` (Integer) - Default of 1000 (increase to at least 2^16 for passwords)
@@ -153,21 +154,31 @@ module ElixirCompat
       # ElixirCompat::PlugCrypto.encrypt(secret_key_base, "salt", "signing salt", "message")
       # ```
       #
-      def encrypt(secret_key_base, salt, signing_salt, data, options = {})
-        encoded = encode(data, options)
-        key = get_secret(secret_key_base, salt, options)
-        signing_key = get_secret(secret_key_base, signing_salt, options)
-        MessageEncryptor.encrypt(encoded, key, signing_key)
+      def encrypt(secret_key_base, salt, *args)
+        case args.length
+        when 1
+          _encrypt(secret_key_base, salt, "", args[0], {})
+        when 2
+          if probably_options(args[1])
+            _encrypt(secret_key_base, salt, "", args[0], args[1])
+          else
+            _encrypt(secret_key_base, salt, args[0], args[1], {})
+          end
+        when 3
+          _encrypt(secret_key_base, salt, args[0], args[1], args[2])
+        end
       end
 
       ##
       # Decrypts and verifies a token that was generated with #encyrpt
       #
+      # :args: secret_key_base, salt, signing_salt, token, options = {}
+      #
       # ### Parameters
       # * `secret_key_base` (String) - The secret key base used to generate a key
       # * `salt` (String) - The salt used to generate the key
-      # * `signing_salt` (String) - The salt used to sign the content encryption key
-      # * `token` (Any) - The token created with #encrypt
+      # * `signing_salt` (String) [optional] - The salt used to sign the content encryption key
+      # * `token` (String) - The token created with #encrypt
       #
       # #### Options
       # * `key_iterations` (Integer) - Default of 1000 (increase to at least 2^16 for passwords)
@@ -193,17 +204,39 @@ module ElixirCompat
       # # ruby
       # secret_key_base = Rails.application.secrets.secret_key_base
       # token = "QTEyOEdDTQ.m2ldzZE0r-p4MXyBMQ_--wf23dSGBst37wkX-w9_Xd98KYQx3_z3Dst_Vyo.Z-vWtDbblZXGJ_p5.wAz3NhV3to7Uu8osM_9Qi5zd7uTY_oDaQgIjcSaLhIvNDG-isG4BPSvD.rH8q5cE5ECOszOwrI0rnTA"
-      # ElixirCompat::PlugCrypto.verify(secret_key_base, "salt", "signing salt", token)
+      # ElixirCompat::PlugCrypto.decrypt(secret_key_base, "salt", "signing salt", token)
       # ```
       #
-      def decrypt(secret_key_base, salt, signing_salt, token, options = {})
+      def decrypt(secret_key_base, salt, *args)
+        case args.length
+        when 1
+          _decrypt(secret_key_base, salt, "", args[0], {})
+        when 2
+          if probably_options(args[1])
+            _decrypt(secret_key_base, salt, "", args[0], args[1])
+          else
+            _decrypt(secret_key_base, salt, args[0], args[1], {})
+          end
+        when 3
+          _decrypt(secret_key_base, salt, args[0], args[1], args[2])
+        end
+      end
+
+      private
+
+      def _encrypt(secret_key_base, salt, signing_salt, data, options = {})
+        encoded = encode(data, options)
+        key = get_secret(secret_key_base, salt, options)
+        signing_key = get_secret(secret_key_base, signing_salt, options)
+        MessageEncryptor.encrypt(encoded, key, signing_key)
+      end
+
+      def _decrypt(secret_key_base, salt, signing_salt, token, options = {})
         key = get_secret(secret_key_base, salt, options)
         signing_key = get_secret(secret_key_base, signing_salt, options)
         encoded = MessageEncryptor.decrypt(token, key, signing_key)
         decode(encoded, options)
       end
-
-      private
 
       def encode(data, options)
         if options[:signed_at]
@@ -249,6 +282,12 @@ module ElixirCompat
         when Hash
           [payload[:data], payload[:signed], 86400]
         end
+      end
+
+      def probably_options(arg)
+        option_keys = [:key_iterations, :key_length, :key_digest, :max_age, :signed_at]
+        return false unless arg.is_a?(Hash)
+        return arg.keys.any? { |k| option_keys.include?(k) }
       end
 
       def get_secret(secret_key_base, salt, options)
