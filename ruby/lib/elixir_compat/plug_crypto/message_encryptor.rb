@@ -14,10 +14,16 @@ module ElixirCompat
         def encrypt(message, secret, signing_secret)
           check_secret(secret)
           check_signing_secret(signing_secret)
+
+          secret = secret[0..31] if secret.bytesize > 32
           aes128_gcm_encrypt(message, secret, signing_secret)
         end
 
         def decrypt(encrypted, secret, signing_secret)
+          check_secret(secret)
+          check_signing_secret(signing_secret)
+
+          secret = secret[0..31] if secret.bytesize > 32
           aes128_gcm_decrypt(encrypted, secret, signing_secret)
         end
 
@@ -79,6 +85,8 @@ module ElixirCompat
           cipher.auth_data = aad
           cipher.auth_tag = cipher_tag
           cipher.update(cipher_text) + cipher.final
+        rescue
+          raise InvalidMessage.new()
         end
 
         def aes_gcm_key_wrap(cek, secret, signing_secret)
@@ -105,7 +113,7 @@ module ElixirCompat
             iv = wrapped_cek.byteslice(48, 60)
             block_decrypt(secret, iv, signing_secret, cipher_text, cipher_tag)
           else
-            raise InvalidSignature.new()
+            raise InvalidMessage.new()
           end
         end
 
@@ -123,7 +131,7 @@ module ElixirCompat
         end
 
         def check_parts(parts)
-          raise InvalidSignature.new() unless parts[0] == "A128GCM"
+          raise InvalidMessage.new() unless parts[0] == "A128GCM"
         end
 
         def bitsize(string)
@@ -132,7 +140,7 @@ module ElixirCompat
 
       end
 
-      class InvalidSignature < StandardError; end # :nodoc:
+      class InvalidMessage < StandardError; end # :nodoc:
 
     end
   end
