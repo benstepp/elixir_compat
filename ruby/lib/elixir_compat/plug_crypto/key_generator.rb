@@ -23,9 +23,9 @@ module ElixirCompat
           iterations: 1000,
           length: 32,
           digest: :sha256
-        }
+        } # :nodoc:
 
-        MAX_LENGTH = (1 << 32) - 1
+        MAX_LENGTH = (1 << 32) - 1 # :nodoc:
 
         ##
         # Generates a derived key suitable for use.
