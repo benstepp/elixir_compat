@@ -4,12 +4,50 @@ require 'erlang'
 module ElixirCompat
   module PlugCrypto
     ##
-    # stuff
+    # `MessageEncryptor` is a simple way to encrypt values which get stored
+    # somewhere you don't trust.
+    #
+    # The encrypted key, initialization vector, cipher text, and cipher tag are
+    # base64url encoded and returned to you.
+    #
+    # This can be used in situations similar to the
+    # `ElixirCompat::PlugCrypto::MessageVerifier`, but where you don't want
+    # users to be able to determine the value of the payload.
+    #
+    # The current algorithm used is AES-128-GCM with the content encryption key
+    # using AES-256-GCM.
+    #
     class MessageEncryptor
       class << self
 
         ##
-        # Encrypts a message
+        # Encrypts a message using authenticated encryption
+        #
+        # ### Parameters
+        # * `message` (String) - The message to be encrypted
+        # * `secret` (String) - The secret used when encrypting
+        # * `signing_secret` (String) - The secret used when encrypting the
+        # content encryption key
+        #
+        # ### Examples
+        #
+        # #### Encrypting a message using the defaults
+        #
+        # ```elixir
+        # # elixir
+        # secret_key_base = Application.get_env(:my_app, :secret_key_base)
+        # key = Plug.Crypto.KeyGenerator.generate(secret_key_base, "secret")
+        # signing_key = Plug.Crypto.KeyGenerator.generate(secret_key_base, "sign secret")
+        # Plug.Crypto.MessageEncryptor.encrypt("hello world", key, signing_key)
+        # ```
+        #
+        # ```ruby
+        # # ruby
+        # secret_key_base = Rails.application.secrets.secret_key_base
+        # key = ElixirCompat::PlugCrypto::KeyGenerator.generate(secret_key_base, "secret")
+        # signing_key = ElixirCompat::PlugCrypto::KeyGenerator.generate(secret_key_base, "sign secret")
+        # ElixirCompat::PlugCrypto::MessageEncryptor.encrypt("hello world", key, signing_key)
+        # ```
         #
         def encrypt(message, secret, signing_secret)
           check_secret(secret)
@@ -19,6 +57,37 @@ module ElixirCompat
           aes128_gcm_encrypt(message, secret, signing_secret)
         end
 
+        ##
+        # Decrypts a message using authenticated encryption
+        #
+        # ### Parameters
+        # * `encrypted` (String) - The encrypted message to be decrypted
+        # * `secret` (String) - The secret used when encrypting
+        # * `signing_secret` (String) - The secret used when encrypting the
+        # content encryption key
+        #
+        # ### Examples
+        #
+        # #### Decrypting a message using the defaults
+        #
+        # ```elixir
+        # # elixir
+        # token = "QTEyOEdDTQ.YJUtf5NLJOGmP7YOeME5_1F_u3DQL2151UJUSXT1EmtqHFcNfHiQv59Cv10.13VDfGLesGBEljis.Llnf.3rJmhN3kFeNoMfx4iMxNiw"
+        # secret_key_base = Application.get_env(:my_app, :secret_key_base)
+        # key = Plug.Crypto.KeyGenerator.generate(secret_key_base, "secret")
+        # signing_key = Plug.Crypto.KeyGenerator.generate(secret_key_base, "sign secret")
+        # Plug.Crypto.MessageEncryptor.encrypt(token", key, signing_key)
+        # ```
+        #
+        # ```ruby
+        # # ruby
+        # token = "QTEyOEdDTQ.YJUtf5NLJOGmP7YOeME5_1F_u3DQL2151UJUSXT1EmtqHFcNfHiQv59Cv10.13VDfGLesGBEljis.Llnf.3rJmhN3kFeNoMfx4iMxNiw"
+        # secret_key_base = Rails.application.secrets.secret_key_base
+        # key = ElixirCompat::PlugCrypto::KeyGenerator.generate(secret_key_base, "secret")
+        # signing_key = ElixirCompat::PlugCrypto::KeyGenerator.generate(secret_key_base, "sign secret")
+        # ElixirCompat::PlugCrypto::MessageEncryptor.decrypt(token, key, signing_key)
+        # ```
+        #
         def decrypt(encrypted, secret, signing_secret)
           check_secret(secret)
           check_signing_secret(signing_secret)
