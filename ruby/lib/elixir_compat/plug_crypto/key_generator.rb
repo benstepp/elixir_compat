@@ -16,7 +16,7 @@ module ElixirCompat
     # textual representation.
     #
     # see http://tools.ietf.org/html/rfc2898#section-5.2
-    module KeyGenerator
+    class KeyGenerator
       class << self
 
         DEFAULT_OPTIONS = {
