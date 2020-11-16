@@ -10,6 +10,7 @@ services:
     volumes:
       - ./ruby:/ruby
       - ./fixtures:/ruby/fixtures
+      - ./docs:/ruby/docs
   elixir:
     build:
       context: './elixir'

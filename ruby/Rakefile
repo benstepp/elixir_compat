@@ -9,7 +9,7 @@ Rake::TestTask.new(:test) do |t|
 end
 
 RDoc::Task.new do |rdoc|
-  rdoc.rdoc_dir = 'doc'
+  rdoc.rdoc_dir = 'docs/ruby'
   rdoc.markup = "markdown"
 
   rdoc.main = "README.md"
