@@ -31,6 +31,151 @@ module ElixirCompat
         a ^ b
       end
 
+      ##
+      # Encodes and signs data into a token
+      #
+      # ### Parameters
+      # * `secret_key_base` (String) - The secret key base used to generate a key
+      # * `salt` (String) - The salt used to generate the key
+      # * `data` (Any) - The data to be encoded into the token. This uses
+      # Erlang.term_to_binary interally
+      #
+      # #### Options
+      #
+      # * `key_iterations` (Integer) - Default of 1000 (increase to at least 2^16 for passwords)
+      # * `key_length` (Integer) - A length in octets for the derived key (defaults to 32)
+      # * `key_digest` (Atom) - The digest type to be used for the pseudo random
+      # function. Allowed values include: `:sha`, `:sha1`, `:sha224`,
+      # `:sha256`, `:sha384`, or `:sha512`.
+      # * `signed_at` (Integer) - The timestamp of when the token was signed,
+      # defaults to Time.now.to_i
+      # * `max_age` - The default maximum age of the token. Defaults to `86400`
+      # seconds (1 day).
+      #
+      # ### Examples
+      #
+      # #### Signing a message
+      #
+      # ```elixir
+      # # elixir
+      # secret_key_base = Application.get_env(:my_app, :secret_key_base)
+      # Plug.Crypto.sign(secret_key_base, "salt", "message")
+      # ```
+      #
+      # ```ruby
+      # # ruby
+      # secret_key_base = Rails.application.secrets.secret_key_base
+      # ElixirCompat::PlugCrypto.sign(secret_key_base, "salt", "message")
+      # ```
+      #
+      #
+      def sign(secret_key_base, salt, data, options = {})
+        encoded = encode(data, options)
+        key = get_secret(secret_key_base, salt, options)
+        MessageVerifier.sign(encoded, key)
+      end
+
+      ##
+      # Decodes the original token created with #sign and verifies it's
+      # integrity.
+      #
+      # ### Parameters
+      # * `secret_key_base` (String) - The secret key base used to generate a key
+      # * `salt` (String) - The salt used to generate the key
+      # * `token` (Any) - The token created with #sign
+      #
+      # #### Options
+      # * `key_iterations` (Integer) - Default of 1000 (increase to at least 2^16 for passwords)
+      # * `key_length` (Integer) - A length in octets for the derived key (defaults to 32)
+      # * `key_digest` (Atom) - The digest type to be used for the pseudo random
+      # function. Allowed values include: `:sha`, `:sha1`, `:sha224`,
+      # `:sha256`, `:sha384`, or `:sha512`.
+      # * `max_age` - The default maximum age of the token. Defaults to `86400`
+      # seconds (1 day).
+      #
+      # ### Examples
+      #
+      # #### Verifying a message
+      #
+      # ```elixir
+      # # elixir
+      # secret_key_base = Application.get_env(:my_app, :secret_key_base)
+      # token = "SFMyNTY.aGVsbG8gd29ybGQ.k_zLAG_uMdIoLoQlm7legV0eIm0J2LmyIU4MH-J6at4"
+      # Plug.Crypto.verify(secret_key_base, "salt", token)
+      # ```
+      #
+      # ```ruby
+      # # ruby
+      # secret_key_base = Rails.application.secrets.secret_key_base
+      # token = "SFMyNTY.aGVsbG8gd29ybGQ.k_zLAG_uMdIoLoQlm7legV0eIm0J2LmyIU4MH-J6at4"
+      # ElixirCompat::PlugCrypto.verify(secret_key_base, "salt", token)
+      # ```
+      #
+      def verify(secret_key_base, salt, token, options = {})
+        key = get_secret(secret_key_base, salt, options)
+        encoded = MessageVerifier.verify(token, key)
+        decode(encoded, options)
+      end
+
+      private
+
+      def encode(data, options)
+        if options[:signed_at]
+          signed_at_ms = options[:signed_at] * 1000
+        else
+          signed_at_ms = Time.now.to_i
+        end
+
+        max_age_in_seconds = options[:max_age] || 86400
+
+        Erlang::TAG_VERSION.chr + Erlang.tuple_to_binary([
+          data,
+          signed_at_ms,
+          max_age_in_seconds
+        ])
+      end
+
+      def decode(encoded, options)
+        payload = backwards_compatible_decode(encoded)
+
+        if expired?(payload[1], options[:max_age] || payload[2])
+          raise ExpiredError.new()
+        else
+          payload[0]
+        end
+      end
+
+      def expired?(signed_at, max_age)
+        return false if max_age == :infinity
+        return true if max_age <= 0
+        (signed_at + (max_age * 1000)) > (Time.now.to_i * 1000)
+      end
+
+      def backwards_compatible_decode(encoded)
+        payload = Erlang.binary_to_term(encoded)
+        case payload
+        when Array
+          if payload.length == 2
+            [payload[0], payload[1], 86400]
+          else
+            [payload[0], payload[1], payload[2]]
+          end
+        when Hash
+          [payload[:data], payload[:signed], 86400]
+        end
+      end
+
+      def get_secret(secret_key_base, salt, options)
+        options = {
+          iterations: options[:key_iterations] || 1000,
+          length: options[:key_length] || 32,
+          digest: options[:key_digest] || :sha256
+        }
+        KeyGenerator.generate(secret_key_base, salt, options)
+      end
+
     end
+
+    class ExpiredError < StandardError; end # :nodoc:
   end
 end
