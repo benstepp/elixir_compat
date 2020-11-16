@@ -5,7 +5,8 @@ require 'elixir_compat/plug_crypto/message_verifier'
 
 module ElixirCompat
   ##
-  # Ruby module that is mostly compatible with `Plug.Crypto` in elixir
+  # ElixirCompat::PlugCrypto is a ruby module that aims to be compatible with
+  # the library `Plug.Crypto` written in elixir.
   #
   # ##### Plug.Crypto External Links
   # * [hex.pm](https://hex.pm/packages/plug_crypto)
@@ -114,6 +115,91 @@ module ElixirCompat
       def verify(secret_key_base, salt, token, options = {})
         key = get_secret(secret_key_base, salt, options)
         encoded = MessageVerifier.verify(token, key)
+        decode(encoded, options)
+      end
+
+      ##
+      # Encodes, encrypts, and signs data into a token
+      #
+      # ### Parameters
+      # * `secret_key_base` (String) - The secret key base used to generate a key
+      # * `salt` (String) - The salt used to generate the key
+      # * `signing_salt` (String) - The salt used to sign the content encryption key
+      # * `data` (Any) - The data to be encoded into the token. This uses
+      # Erlang.term_to_binary interally
+      #
+      # #### Options
+      # * `key_iterations` (Integer) - Default of 1000 (increase to at least 2^16 for passwords)
+      # * `key_length` (Integer) - A length in octets for the derived key (defaults to 32)
+      # * `key_digest` (Atom) - The digest type to be used for the pseudo random
+      # function. Allowed values include: `:sha`, `:sha1`, `:sha224`,
+      # `:sha256`, `:sha384`, or `:sha512`.
+      # * `max_age` - The default maximum age of the token. Defaults to `86400`
+      # seconds (1 day).
+      #
+      # ### Examples
+      #
+      # #### Encrypting some data
+      #
+      # ```elixir
+      # # elixir
+      # secret_key_base = Application.get_env(:my_app, :secret_key_base)
+      # Plug.Crypto.encrypt(secret_key_base, "salt", "signing salt", "message")
+      # ```
+      #
+      # ```ruby
+      # # ruby
+      # secret_key_base = Rails.application.secrets.secret_key_base
+      # ElixirCompat::PlugCrypto.encrypt(secret_key_base, "salt", "signing salt", "message")
+      # ```
+      #
+      def encrypt(secret_key_base, salt, signing_salt, data, options = {})
+        encoded = encode(data, options)
+        key = get_secret(secret_key_base, salt, options)
+        signing_key = get_secret(secret_key_base, signing_salt, options)
+        MessageEncryptor.encrypt(encoded, key, signing_key)
+      end
+
+      ##
+      # Decrypts and verifies a token that was generated with #encyrpt
+      #
+      # ### Parameters
+      # * `secret_key_base` (String) - The secret key base used to generate a key
+      # * `salt` (String) - The salt used to generate the key
+      # * `signing_salt` (String) - The salt used to sign the content encryption key
+      # * `token` (Any) - The token created with #encrypt
+      #
+      # #### Options
+      # * `key_iterations` (Integer) - Default of 1000 (increase to at least 2^16 for passwords)
+      # * `key_length` (Integer) - A length in octets for the derived key (defaults to 32)
+      # * `key_digest` (Atom) - The digest type to be used for the pseudo random
+      # function. Allowed values include: `:sha`, `:sha1`, `:sha224`,
+      # `:sha256`, `:sha384`, or `:sha512`.
+      # * `max_age` - The default maximum age of the token. Defaults to `86400`
+      # seconds (1 day).
+      #
+      # ### Examples
+      #
+      # #### Decrypting a token
+      #
+      # ```elixir
+      # # elixir
+      # secret_key_base = Application.get_env(:my_app, :secret_key_base)
+      # token = "QTEyOEdDTQ.m2ldzZE0r-p4MXyBMQ_--wf23dSGBst37wkX-w9_Xd98KYQx3_z3Dst_Vyo.Z-vWtDbblZXGJ_p5.wAz3NhV3to7Uu8osM_9Qi5zd7uTY_oDaQgIjcSaLhIvNDG-isG4BPSvD.rH8q5cE5ECOszOwrI0rnTA"
+      # Plug.Crypto.decrypt(secret_key_base, "salt", "signing salt", token)
+      # ```
+      #
+      # ```ruby
+      # # ruby
+      # secret_key_base = Rails.application.secrets.secret_key_base
+      # token = "QTEyOEdDTQ.m2ldzZE0r-p4MXyBMQ_--wf23dSGBst37wkX-w9_Xd98KYQx3_z3Dst_Vyo.Z-vWtDbblZXGJ_p5.wAz3NhV3to7Uu8osM_9Qi5zd7uTY_oDaQgIjcSaLhIvNDG-isG4BPSvD.rH8q5cE5ECOszOwrI0rnTA"
+      # ElixirCompat::PlugCrypto.verify(secret_key_base, "salt", "signing salt", token)
+      # ```
+      #
+      def decrypt(secret_key_base, salt, signing_salt, token, options = {})
+        key = get_secret(secret_key_base, salt, options)
+        signing_key = get_secret(secret_key_base, signing_salt, options)
+        encoded = MessageEncryptor.decrypt(token, key, signing_key)
         decode(encoded, options)
       end
 
