@@ -225,7 +225,7 @@ module ElixirCompat
         payload = backwards_compatible_decode(encoded)
 
         if expired?(payload[1], options[:max_age] || payload[2])
-          raise ExpiredError.new()
+          raise Error.new(:expired)
         else
           payload[0]
         end
@@ -262,6 +262,6 @@ module ElixirCompat
 
     end
 
-    class ExpiredError < StandardError; end # :nodoc:
+    class Error < StandardError; end # :nodoc:
   end
 end

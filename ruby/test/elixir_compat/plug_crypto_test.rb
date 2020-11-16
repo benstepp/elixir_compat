@@ -47,7 +47,7 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
     data = [0, 1, 2, 3]
     secret_key_base = secret()
     signed = PC.sign(secret_key_base, "salt", data)
-    assert_raises PC::MessageVerifier::InvalidSignature do
+    assert_raises PC::Error do
       PC.verify(secret_key_base, "pepper", signed)
     end
   end
@@ -58,11 +58,11 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
     assert PC.verify(secret_key_base, "salt", signed, max_age: 1000)
     assert PC.verify(secret_key_base, "salt", signed, max_age: 100)
 
-    assert_raises PC::ExpiredError do
+    assert_raises PC::Error do
       PC.verify(secret_key_base, "salt", signed, max_age: -1000)
     end
 
-    assert_raises PC::ExpiredError do
+    assert_raises PC::Error do
       PC.verify(secret_key_base, "salt", signed, max_age: -100)
     end
   end
@@ -71,7 +71,7 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
     secret_key_base = secret()
     signed = PC.sign(secret_key_base, "salt", "test message", max_age: -100)
 
-    assert_raises PC::ExpiredError do
+    assert_raises PC::Error do
       PC.verify(secret_key_base, "salt", signed)
     end
   end
@@ -126,7 +126,7 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
   def test_decrypt_errors_when_secret_changes
     token = PC.encrypt(secret(), "salt", "signing salt", "string")
 
-    assert_raises PC::MessageEncryptor::InvalidMessage do
+    assert_raises PC::Error do
       PC.decrypt(secret(), "salt", "signing salt", token)
     end
   end
@@ -135,7 +135,7 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
     secret_key_base = secret()
     token = PC.encrypt(secret_key_base, "salt", "signing salt", "string")
 
-    assert_raises PC::MessageEncryptor::InvalidMessage do
+    assert_raises PC::Error do
       PC.decrypt(secret_key_base, "salt2", "signing salt", token)
     end
   end
@@ -144,7 +144,7 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
     secret_key_base = secret()
     token = PC.encrypt(secret_key_base, "salt", "signing salt", "string")
 
-    assert_raises PC::MessageEncryptor::InvalidMessage do
+    assert_raises PC::Error do
       PC.decrypt(secret_key_base, "salt", "signing salt 2", token)
     end
   end
@@ -156,11 +156,11 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
     assert PC.decrypt(secret_key_base, "salt", "signing salt", token, max_age: 1000)
     assert PC.decrypt(secret_key_base, "salt", "signing salt", token, max_age: 100)
 
-    assert_raises PC::ExpiredError do
+    assert_raises PC::Error do
       PC.decrypt(secret_key_base, "salt", "signing salt", token, max_age: -1000)
     end
 
-    assert_raises PC::ExpiredError do
+    assert_raises PC::Error do
       PC.decrypt(secret_key_base, "salt", "signing salt", token, max_age: -100)
     end
   end
@@ -172,7 +172,7 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
 
     token = PC.encrypt(secret_key_base, "salt", "signing salt", "string", max_age: -1000)
 
-    assert_raises PC::ExpiredError do
+    assert_raises PC::Error do
       PC.decrypt(secret_key_base, "salt", "signing salt", token)
     end
   end
@@ -187,7 +187,7 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
     secret_key_base = secret()
     token = PC.encrypt(secret_key_base, "salt", "signing salt", "message", key_iterations: 1)
 
-    assert_raises PC::MessageEncryptor::InvalidMessage do
+    assert_raises PC::Error do
       PC.decrypt(secret_key_base, "salt", "signing salt", token, key_iterations: 2)
     end
   end
@@ -196,7 +196,7 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
     secret_key_base = secret()
     token = PC.encrypt(secret_key_base, "salt", "signing salt", "message", key_length: 32)
 
-    assert_raises PC::MessageEncryptor::InvalidMessage do
+    assert_raises PC::Error do
       PC.decrypt(secret_key_base, "salt", "signing salt", token, key_length: 64)
     end
   end
@@ -204,7 +204,7 @@ class ElixirCompat::PlugCryptoTest < Minitest::Test
   def test_encrypt_passes_key_digest_to_key_generator
     secret_key_base = secret()
     token = PC.encrypt(secret_key_base, "salt", "signing salt", "message", key_digest: :sha256)
-    assert_raises PC::MessageEncryptor::InvalidMessage do
+    assert_raises PC::Error do
       PC.decrypt(secret_key_base, "salt", "signing salt", token, key_digest: :sha512)
     end
   end

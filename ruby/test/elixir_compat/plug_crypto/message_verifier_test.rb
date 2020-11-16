@@ -54,7 +54,7 @@ class ElixirCompat::PlugCrypto::MessageVerifierTest < Minitest::Test
   def test_verify_errors_when_secret_changed_using_sha256
     signed = MV.sign("hello world", "secret")
 
-    assert_raises MV::InvalidSignature do
+    assert_raises ElixirCompat::PlugCrypto::Error do
       MV.verify(signed, "newsecret")
     end
   end
@@ -62,7 +62,7 @@ class ElixirCompat::PlugCrypto::MessageVerifierTest < Minitest::Test
   def test_verify_errors_when_secret_changed_using_sha384
     signed = MV.sign("hello world", "secret", :sha384)
 
-    assert_raises MV::InvalidSignature do
+    assert_raises ElixirCompat::PlugCrypto::Error do
       MV.verify(signed, "newsecret")
     end
   end
@@ -70,7 +70,7 @@ class ElixirCompat::PlugCrypto::MessageVerifierTest < Minitest::Test
   def test_verify_errors_when_secret_changed_using_sha512
     signed = MV.sign("hello world", "secret", :sha512)
 
-    assert_raises MV::InvalidSignature do
+    assert_raises ElixirCompat::PlugCrypto::Error do
       MV.verify(signed, "newsecret")
     end
   end
@@ -81,7 +81,7 @@ class ElixirCompat::PlugCrypto::MessageVerifierTest < Minitest::Test
     parts[1] = Base64.urlsafe_encode64("hello mars", padding: false)
     tampered = parts.join(".")
 
-    assert_raises MV::InvalidSignature do
+    assert_raises ElixirCompat::PlugCrypto::Error do
       MV.verify(tampered, "secret")
     end
   end
@@ -92,7 +92,7 @@ class ElixirCompat::PlugCrypto::MessageVerifierTest < Minitest::Test
     parts[1] = Base64.urlsafe_encode64("hello mars", padding: false)
     tampered = parts.join(".")
 
-    assert_raises MV::InvalidSignature do
+    assert_raises ElixirCompat::PlugCrypto::Error do
       MV.verify(tampered, "secret")
     end
   end
@@ -103,7 +103,7 @@ class ElixirCompat::PlugCrypto::MessageVerifierTest < Minitest::Test
     parts[1] = Base64.urlsafe_encode64("hello mars", padding: false)
     tampered = parts.join(".")
 
-    assert_raises MV::InvalidSignature do
+    assert_raises ElixirCompat::PlugCrypto::Error do
       MV.verify(tampered, "secret")
     end
   end
@@ -114,7 +114,7 @@ class ElixirCompat::PlugCrypto::MessageVerifierTest < Minitest::Test
     parts[0] = Base64.urlsafe_encode64("HS384", padding: false)
     tampered = parts.join(".")
 
-    assert_raises MV::InvalidSignature do
+    assert_raises ElixirCompat::PlugCrypto::Error do
       MV.verify(tampered, "secret")
     end
   end
@@ -125,7 +125,7 @@ class ElixirCompat::PlugCrypto::MessageVerifierTest < Minitest::Test
     parts[0] = Base64.urlsafe_encode64("HS512", padding: false)
     tampered = parts.join(".")
 
-    assert_raises MV::InvalidSignature do
+    assert_raises ElixirCompat::PlugCrypto::Error do
       MV.verify(tampered, "secret")
     end
   end
@@ -136,7 +136,7 @@ class ElixirCompat::PlugCrypto::MessageVerifierTest < Minitest::Test
     parts[0] = Base64.urlsafe_encode64("HS256", padding: false)
     tampered = parts.join(".")
 
-    assert_raises MV::InvalidSignature do
+    assert_raises ElixirCompat::PlugCrypto::Error do
       MV.verify(tampered, "secret")
     end
   end

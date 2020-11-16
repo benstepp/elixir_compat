@@ -60,9 +60,8 @@ module ElixirCompat
 
         ##
         # Decodes and Verfies the encoded binary was not tampered with. This
-        # method will raise a
-        # `ElixirCompat::PlugCrypto::MessageVerifier::InvalidSignature`
-        # whenever the message was not verified.
+        # method will raise a `ElixirCompat::PlugCrypto::Error` whenever the
+        # message was not verified.
         #
         # ### Parameters
         #
@@ -107,7 +106,7 @@ module ElixirCompat
         # signed = "SFMyNTY.aGVsbG8gd29ybGQ.k_zLAG_uMdIoLoQlm7legV0eIm0J2LmyIU4MH-J6at4"
         # begin
         #   ElixirCompat::PlugCrypto::MessageVerifier.verify(signed, "secret")
-        # rescue ElixirCompat::PlugCrypto::MesageVerifier::InvalidSignature
+        # rescue ElixirCompat::PlugCrypto::Error
         #   # invalid
         # end
         # ```
@@ -134,7 +133,7 @@ module ElixirCompat
           if ElixirCompat::PlugCrypto.secure_compare(challenge, token[:signature])
             token[:payload]
           else
-            raise InvalidSignature.new
+            raise ElixirCompat::PlugCrypto::Error.new(:invalid)
           end
         end
 
@@ -208,8 +207,6 @@ module ElixirCompat
         end
 
       end
-
-      class InvalidSignature < StandardError; end # :nodoc:
 
     end
   end

@@ -155,7 +155,7 @@ module ElixirCompat
           cipher.auth_tag = cipher_tag
           cipher.update(cipher_text) + cipher.final
         rescue
-          raise InvalidMessage.new()
+          raise ElixirCompat::PlugCrypto::Error.new(:invalid)
         end
 
         def aes_gcm_key_wrap(cek, secret, signing_secret)
@@ -182,7 +182,7 @@ module ElixirCompat
             iv = wrapped_cek.byteslice(48, 60)
             block_decrypt(secret, iv, signing_secret, cipher_text, cipher_tag)
           else
-            raise InvalidMessage.new()
+            raise ElixirCompat::PlugCrypto::Error.new(:invalid)
           end
         end
 
@@ -200,7 +200,7 @@ module ElixirCompat
         end
 
         def check_parts(parts)
-          raise InvalidMessage.new() unless parts[0] == "A128GCM"
+          raise ElixirCompat::PlugCrypto::Error.new(:invalid) unless parts[0] == "A128GCM"
         end
 
         def bitsize(string)
@@ -208,8 +208,6 @@ module ElixirCompat
         end
 
       end
-
-      class InvalidMessage < StandardError; end # :nodoc:
 
     end
   end
