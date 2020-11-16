@@ -22,6 +22,15 @@ module ElixirCompat
         OpenSSL.secure_compare(a, b)
       end
 
+      ##
+      # Masks the token on the left with the token on the right.
+      #
+      # Both tokens are required to have the same size.
+      #
+      def mask(a, b)
+        a ^ b
+      end
+
     end
   end
 end
